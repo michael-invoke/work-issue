@@ -10,7 +10,11 @@ Issue → classify → worktree → implement → verify → PR → review → c
 
 ## First-Run Setup
 
-On the first invocation in a project, check if `.claude/settings.json` contains the `git worktree add` plan-gate hook. If it does not, add it automatically using the Edit or Write tool:
+On the first invocation in a project, check if `.claude/settings.json` contains both hooks below. If either is missing, add it automatically using the Edit or Write tool:
+
+**Hook 1 — Plan gate (PreToolUse):** Blocks worktree creation until the implementation plan is posted to the issue.
+
+**Hook 2 — Review gate (PostToolUse):** After `gh pr create`, blocks until a code review agent is dispatched.
 
 ```json
 {
@@ -26,12 +30,24 @@ On the first invocation in a project, check if `.claude/settings.json` contains 
           }
         ]
       }
+    ],
+    "PostToolUse": [
+      {
+        "matcher": "Bash",
+        "hooks": [
+          {
+            "type": "prompt",
+            "if": "Bash(gh pr create:*)",
+            "prompt": "A PR was just created via `gh pr create`. Check the conversation: has a code review agent already been dispatched (via the Agent tool with a code-reviewer subagent, or via the superpowers:requesting-code-review skill) for THIS PR? If yes, ALLOW. If no review agent has been dispatched yet, BLOCK with reason: 'You must dispatch a code review agent immediately after creating a PR. Do not wait for CI — launch the review now.'"
+          }
+        ]
+      }
     ]
   }
 }
 ```
 
-Merge with any existing settings — do not overwrite. Tell the user: _"Added plan-gate hook to `.claude/settings.json` — worktree creation will be blocked until the implementation plan is posted to the issue."_
+Merge with any existing settings — do not overwrite. Tell the user: _"Added plan-gate and review-gate hooks to `.claude/settings.json` — worktree creation requires a posted plan, and PR creation requires an immediate code review dispatch."_
 
 ## Ground Rules
 
@@ -213,12 +229,10 @@ git push -u origin issue/<number>-<slug>
 gh pr create --head issue/<number>-<slug> --base master --title "Short title" --body-file <body>
 ```
 
-Wait for CI:
+Immediately dispatch **1 Sonnet review agent** with the issue text, changed files, and **worktree path**. Reviewer reads local files and answers: "Does this achieve what the issue asked? Any issues?" Don't wait for CI first — check CI status after the review completes:
 ```bash
 gh pr checks <pr-number> --watch
 ```
-
-Dispatch **1 review agent** (Haiku for trivial, Sonnet for small) with the issue text, changed files, and **worktree path**. Reviewer reads local files and answers: "Does this achieve what the issue asked? Any issues?"
 
 ### Step 4: Cleanup + Report
 
@@ -279,10 +293,12 @@ No completion claims without fresh output evidence.
 ```bash
 git push -u origin issue/<number>-<slug>
 gh pr create --head issue/<number>-<slug> --base master --title "Title" --body-file <body>
-gh pr checks <pr-number> --watch
 ```
 
-Dispatch **1 Opus review agent** with issue text, CLAUDE.md, changed file paths, and worktree path. Reviewer reads local files.
+Immediately dispatch **1 Opus review agent** with issue text, CLAUDE.md, changed file paths, and worktree path. Reviewer reads local files. Don't wait for CI first — check CI status after the review completes:
+```bash
+gh pr checks <pr-number> --watch
+```
 
 If reviewer finds issues: fix → re-verify → re-review.
 
@@ -325,7 +341,10 @@ Same as STANDARD Step 4.
 
 Push and create PR as above.
 
-**Invoke `superpowers:requesting-code-review`** — full review protocol.
+Immediately **invoke `superpowers:requesting-code-review`** — full review protocol. Don't wait for CI first — check CI status after the review completes:
+```bash
+gh pr checks <pr-number> --watch
+```
 
 If review finds issues: fix → re-verify → re-review.
 
