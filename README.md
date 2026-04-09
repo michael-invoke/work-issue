@@ -4,15 +4,7 @@ A Claude Code plugin that automates GitHub issue workflows. Give it an issue num
 
 ## Installation
 
-```bash
-claude /plugin install michael-invoke/work-issue
-```
-
-Or install directly from the repo URL:
-
-```bash
-claude /plugin install https://github.com/michael-invoke/work-issue
-```
+manual only, put in personal skills.
 
 ## Usage
 
