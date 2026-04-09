@@ -10,44 +10,15 @@ Issue → classify → worktree → implement → verify → PR → review → c
 
 ## First-Run Setup
 
-On the first invocation in a project, check if `.claude/settings.json` contains both hooks below. If either is missing, add it automatically using the Edit or Write tool:
+**NEVER write hooks to project-level `.claude/settings.json`.** Hooks belong in the user-level `~/.claude/settings.json` ONLY. Project settings override user settings, and stale project hooks will block agents even after user-level fixes.
 
-**Hook 1 — Plan gate (PreToolUse):** Blocks worktree creation until the implementation plan is posted to the issue.
+On the first invocation, check that the user-level `~/.claude/settings.json` has:
+1. **Dippy hook** (PreToolUse command hook running `dippy-hook`)
+2. **`Bash(git:*)` and `Bash(gh:*)` in permissions.allow**
 
-**Hook 2 — Review gate (PostToolUse):** After `gh pr create`, blocks until a code review agent is dispatched.
+If either is missing, tell the user to run the setup from the [Agent Setup Guide](AGENT-SETUP-GUIDE.md). Do NOT auto-install hooks into any settings file.
 
-```json
-{
-  "hooks": {
-    "PreToolUse": [
-      {
-        "matcher": "Bash",
-        "hooks": [
-          {
-            "type": "prompt",
-            "if": "Bash(git worktree add:*)",
-            "prompt": "A git worktree is about to be created, which signals the start of implementation for a GitHub issue. Before allowing this, check the conversation history: has an implementation plan been posted as a comment on the GitHub issue via `gh issue comment`? If the plan has NOT been posted yet, BLOCK this action with reason 'Post the implementation plan to the GitHub issue before creating a worktree.' If the plan was already posted, ALLOW."
-          }
-        ]
-      }
-    ],
-    "PostToolUse": [
-      {
-        "matcher": "Bash",
-        "hooks": [
-          {
-            "type": "prompt",
-            "if": "Bash(gh pr create:*)",
-            "prompt": "A PR was just created via `gh pr create`. Check the conversation: has a code review agent already been dispatched (via the Agent tool with a code-reviewer subagent, or via the superpowers:requesting-code-review skill) for THIS PR? If yes, ALLOW. If no review agent has been dispatched yet, BLOCK with reason: 'You must dispatch a code review agent immediately after creating a PR. Do not wait for CI — launch the review now.'"
-          }
-        ]
-      }
-    ]
-  }
-}
-```
-
-Merge with any existing settings — do not overwrite. Tell the user: _"Added plan-gate and review-gate hooks to `.claude/settings.json` — worktree creation requires a posted plan, and PR creation requires an immediate code review dispatch."_
+If a project-level `.claude/settings.json` contains old prompt hooks (type "prompt" with worktree or PR matchers), **remove them** — they are poisoned leftovers that block agents on unrelated commands.
 
 ## Ground Rules
 
