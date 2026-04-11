@@ -24,10 +24,11 @@ If a project-level `.claude/settings.json` contains old prompt hooks (type "prom
 
 - **Local filesystem is source of truth.** Read actual files, never assume state.
 - **One worktree per issue.** Created via `git worktree add` from the main repo directory.
-- **Main repo stays on master.** No `git checkout -b`, no `git switch -c`, no branch switching in the main directory. Ever.
+- **NEVER switch branches anywhere.** No `git checkout <branch>`, no `git switch <branch>`, no `git checkout -b`, no `git switch -c` — in ANY directory (main repo, worktrees, or otherwise). The only allowed uses of `git checkout` are: `git checkout -- <file>` (restore a file) and `git checkout master` (return to master in main repo if somehow off it). Worktrees ARE the branch isolation mechanism — switching branches defeats their purpose and can hijack other agents' terminals.
+- **Stay in your worktree.** An agent working in worktree A must NEVER `cd` into worktree B or the main repo and run git commands there. Each agent operates only in its assigned worktree path.
 - **Scale effort to complexity.** A one-line fix does not need brainstorming.
 - **Plan MUST be posted to the issue before creating a worktree.** Every path (SHORT, STANDARD, FULL) requires posting the implementation plan as a GitHub issue comment via `gh issue comment <number>` BEFORE `git worktree add`. No exceptions. If you are about to create a worktree and have not yet posted the plan, STOP and post it first.
-- **Cleanup is not optional.** Worktree removal happens immediately after PR creation, not as a separate "later" step.
+- **Cleanup is not optional.** Worktree removal AND local branch deletion happen immediately after PR creation. The remote branch is the PR's branch — it stays until the PR is merged/closed.
 - **Serial by default.** Multiple issues are worked one at a time. Each issue is merged to master before the next begins. See **Multiple Issues** section.
 
 ## Multiple Issues
@@ -95,7 +96,8 @@ If any issue fails mid-work (type errors, test failures, agent crash):
 cd <main-repo-path>
 git worktree remove .worktrees/issue-<number>-<slug> --force 2>/dev/null
 git branch -D issue/<number>-<slug> 2>/dev/null
-git worktree list  # verify clean
+git worktree list   # verify clean
+git branch --list 'issue/*'  # verify no leftover branches
 ```
 
 ---
@@ -211,8 +213,12 @@ gh pr checks <pr-number> --watch
 ```bash
 cd <main-repo-path>
 git worktree remove .worktrees/issue-<number>-<slug>
+git branch -D issue/<number>-<slug>
 git worktree list   # Verify only main repo remains
+git branch --list 'issue/*'  # Verify branch is gone
 ```
+
+The remote branch stays — it's the PR's source branch. GitHub deletes it on merge if configured, or the user cleans up after.
 
 Report to user: PR URL, what was done, review result, whether issue auto-closes on merge.
 
@@ -279,7 +285,9 @@ If reviewer finds issues: fix → re-verify → re-review.
 ```bash
 cd <main-repo-path>
 git worktree remove .worktrees/issue-<number>-<slug>
-git worktree list
+git branch -D issue/<number>-<slug>
+git worktree list   # Verify only main repo remains
+git branch --list 'issue/*'  # Verify branch is gone
 ```
 
 Report: PR URL, implementation summary, review result, CI status.
