@@ -203,10 +203,7 @@ git push -u origin issue/<number>-<slug>
 gh pr create --head issue/<number>-<slug> --base master --title "Short title" --body-file <body>
 ```
 
-Immediately dispatch **1 Sonnet review agent** with the issue text, changed files, and **worktree path** (NEVER the main repo path). Reviewer reads local files in the worktree and answers: "Does this achieve what the issue asked? Any issues?" Don't wait for CI first — check CI status after the review completes:
-```bash
-gh pr checks <pr-number> --watch
-```
+Immediately dispatch **1 Sonnet review agent** with the issue text, changed files, and **worktree path** (NEVER the main repo path). Reviewer reads local files in the worktree and answers: "Does this achieve what the issue asked? Any issues?"
 
 ### Step 4: Cleanup + Report
 
@@ -273,10 +270,7 @@ git push -u origin issue/<number>-<slug>
 gh pr create --head issue/<number>-<slug> --base master --title "Title" --body-file <body>
 ```
 
-Immediately dispatch **1 Opus review agent** with issue text, CLAUDE.md, changed file paths, and **worktree path** (NEVER the main repo path). Reviewer reads local files in the worktree. Don't wait for CI first — check CI status after the review completes:
-```bash
-gh pr checks <pr-number> --watch
-```
+Immediately dispatch **1 Opus review agent** with issue text, CLAUDE.md, changed file paths, and **worktree path** (NEVER the main repo path). Reviewer reads local files in the worktree.
 
 If reviewer finds issues: fix → re-verify → re-review.
 
@@ -321,10 +315,7 @@ Same as STANDARD Step 4.
 
 Push and create PR as above.
 
-Immediately **invoke `superpowers:requesting-code-review`** — full review protocol. Don't wait for CI first — check CI status after the review completes:
-```bash
-gh pr checks <pr-number> --watch
-```
+Immediately **invoke `superpowers:requesting-code-review`** — full review protocol.
 
 If review finds issues: fix → re-verify → re-review.
 
