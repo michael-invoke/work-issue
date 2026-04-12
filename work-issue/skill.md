@@ -24,6 +24,7 @@ If a project-level `.claude/settings.json` contains old prompt hooks (type "prom
 
 - **Local filesystem is source of truth.** Read actual files, never assume state.
 - **One worktree per issue.** Created via `git worktree add` from the main repo directory.
+- **MAIN REPO IS READ-ONLY.** Once a worktree is created, the main repo directory is OFF LIMITS for any writes, edits, commits, or code changes. The ONLY commands allowed in the main repo are: `git worktree add`, `git worktree remove`, `git worktree list`, `git branch -D`, `git pull`, and `git status`. No Edit, no Write, no code review agents pointed at main. ALL implementation work happens in the worktree. Review agents MUST be given the **worktree path**, never the main repo path.
 - **NEVER switch branches anywhere.** No `git checkout <branch>`, no `git switch <branch>`, no `git checkout -b`, no `git switch -c` — in ANY directory (main repo, worktrees, or otherwise). The only allowed uses of `git checkout` are: `git checkout -- <file>` (restore a file) and `git checkout master` (return to master in main repo if somehow off it). Worktrees ARE the branch isolation mechanism — switching branches defeats their purpose and can hijack other agents' terminals.
 - **Stay in your worktree.** An agent working in worktree A must NEVER `cd` into worktree B or the main repo and run git commands there. Each agent operates only in its assigned worktree path.
 - **Scale effort to complexity.** A one-line fix does not need brainstorming.
@@ -202,7 +203,7 @@ git push -u origin issue/<number>-<slug>
 gh pr create --head issue/<number>-<slug> --base master --title "Short title" --body-file <body>
 ```
 
-Immediately dispatch **1 Sonnet review agent** with the issue text, changed files, and **worktree path**. Reviewer reads local files and answers: "Does this achieve what the issue asked? Any issues?" Don't wait for CI first — check CI status after the review completes:
+Immediately dispatch **1 Sonnet review agent** with the issue text, changed files, and **worktree path** (NEVER the main repo path). Reviewer reads local files in the worktree and answers: "Does this achieve what the issue asked? Any issues?" Don't wait for CI first — check CI status after the review completes:
 ```bash
 gh pr checks <pr-number> --watch
 ```
@@ -272,7 +273,7 @@ git push -u origin issue/<number>-<slug>
 gh pr create --head issue/<number>-<slug> --base master --title "Title" --body-file <body>
 ```
 
-Immediately dispatch **1 Opus review agent** with issue text, CLAUDE.md, changed file paths, and worktree path. Reviewer reads local files. Don't wait for CI first — check CI status after the review completes:
+Immediately dispatch **1 Opus review agent** with issue text, CLAUDE.md, changed file paths, and **worktree path** (NEVER the main repo path). Reviewer reads local files in the worktree. Don't wait for CI first — check CI status after the review completes:
 ```bash
 gh pr checks <pr-number> --watch
 ```
